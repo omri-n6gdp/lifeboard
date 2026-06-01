@@ -1,0 +1,17 @@
+{
+  "display_name": "Your name",
+  "goals": [],
+  "calendar": { "ical_urls": [] },
+  "news": {
+    "feeds": [
+      "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "https://hnrss.org/frontpage"
+    ],
+    "max_items": 12
+  },
+  "notion": { "token": "", "habits_database_id": "", "parent_page_id": "" },
+  "trading": { "jarvis_dir": "~/.jarvis", "jarvis_api_url": "" },
+  "claude": { "projects_dir": "~/.claude/projects" },
+  "panels": ["today", "trading", "feeds"],
+  "theme": "a"
+}
