@@ -41,9 +41,11 @@ the proven pattern on this machine.
 - A **panel system** that makes adding a new life area a ~10-minute job.
 - Three working panels: **Today / planner**, **Trading & money**, **Feeds**.
 - **Always-live** data where it applies, fetched by the engine itself (no manual
-  refresh): calendar via a private link, news via public feeds, trading from the
-  existing jarvis data, Claude projects from disk.
-- Things Omri types (to-dos, habit check-offs) **persist** between sessions.
+  refresh): calendar via a private link, **habits via Notion**, news via public
+  feeds, trading from the existing jarvis data, Claude projects from disk.
+- **Habits live in Notion** (a habits database), read and ticked off by the
+  board through Notion's own connection — so Omri can also see/edit them on his
+  phone. To-dos Omri types persist locally between sessions.
 - One editable settings file; nothing personal hardcoded.
 - 2–3 distinct frontend designs sharing one data layer.
 - Copy-paste run instructions matching his other dashboards.
@@ -56,6 +58,9 @@ the proven pattern on this machine.
   reads the calendar; it does not edit it.
 - Full Google OAuth. Calendar uses the private iCal secret link instead (far
   less setup for a non-technical user).
+- **No MCPs.** An MCP is a tool for the AI assistant, not something a standalone
+  web app can call. The board talks to Notion via Notion's **public REST API**
+  with an integration token, the same direct way it fetches the calendar.
 
 ---
 
@@ -76,14 +81,15 @@ Four cleanly separated units, each with one job:
                 │  - serves the board + the /api surface        │
                 │  - one provider module per panel              │
                 └───┬───────────────┬───────────────┬──────────┘
-                    │               │               │
-          ┌─────────▼──┐   ┌────────▼─────┐   ┌─────▼───────────┐
-          │ Live fetch │   │ Read on-disk │   │ Local user data │
-          │ - calendar │   │ - jarvis     │   │ - to-dos        │
-          │   (iCal)   │   │   trading    │   │ - habits/streaks│
-          │ - news RSS │   │ - .claude    │   │ (saved file)    │
-          └────────────┘   │   projects   │   └─────────────────┘
-                           └──────────────┘
+          ┌─────────┬───────┴───────┬───────────────┬──────────┐
+          │         │               │               │          │
+   ┌──────▼─────┐ ┌─▼────────────┐ ┌▼─────────────┐ ┌▼────────────────┐
+   │ Live fetch │ │ Notion (REST)│ │ Read on-disk │ │ Local user data │
+   │ - calendar │ │ - habits DB  │ │ - jarvis     │ │ - to-dos        │
+   │   (iCal)   │ │   (read +    │ │   trading    │ │ (saved file)    │
+   │ - news RSS │ │   tick off)  │ │ - .claude    │ │                 │
+   └────────────┘ └──────────────┘ │   projects   │ └─────────────────┘
+                                    └──────────────┘
               All personal values come from one settings file.
 ```
 
@@ -96,7 +102,9 @@ Responsibilities:
 - Fetch live data **server-side** (calendar iCal, news RSS) so there are no
   browser CORS problems and no keys exposed to the page.
 - Read existing on-disk data (jarvis trading, `~/.claude/projects`).
-- Read and write the local user-data store (to-dos, habits).
+- Read and write **Notion** (habits database) via its REST API + integration
+  token; create the habits database on first run if it doesn't exist.
+- Read and write the local user-data store (to-dos).
 - Load all personal values from the settings file.
 
 ### 3.2 The settings file
@@ -107,9 +115,18 @@ which panels are enabled + their order. No personal data anywhere else.
 
 ### 3.3 The local user-data store
 A small local file (JSON to start; SQLite if it grows) under `~/.lifeboard/`
-that persists everything Omri types — to-do items and their done-state, habit
-definitions, and daily check-offs / streaks. Read and written only through the
-engine.
+that persists what Omri types and isn't kept elsewhere — to-do items and their
+done-state. Read and written only through the engine. (Habits are **not** stored
+here; they live in Notion — see §3.5.)
+
+### 3.5 Notion (habits source of truth)
+Habits live in a **Notion database**, so they are editable from the board, the
+Notion app, or Omri's phone. The engine talks to Notion through its public REST
+API using an integration token from the settings file. On first run, if no
+habits database is configured/found, the engine **creates one** under a Notion
+page Omri has shared with the integration, with the properties the habit panel
+needs (name, active, and a per-day check-off / log). Streaks are computed by the
+engine from the Notion data; nothing about habits is hardcoded.
 
 ### 3.4 The frontend (the board)
 Static HTML/CSS/JS served by the engine. A shared `lifeboard-core.js` provides
@@ -156,8 +173,11 @@ cards in a "Today" group, design-dependent):
   upcoming). Refreshed on load and on a timer.
 - **To-do list (read + write):** add an item, tick it done, delete it. Saved to
   the local user-data store so it persists. Optional due-date/sort later.
-- **Habits (read + write):** a set of daily habits (defined in settings or via
-  the UI); tap to check off today; the engine tracks streaks and recent history.
+- **Habits (read + write, backed by Notion):** habits come from a Notion
+  database; tap to check off today and the board writes it back to Notion; the
+  engine computes streaks and recent history from the Notion data. Add/edit a
+  habit either on the board or directly in Notion — both stay in sync. If Notion
+  isn't configured yet, the card shows a friendly "connect Notion" setup hint.
 
 ### 5.2 Trading & money
 A glanceable summary of Omri's portfolio, **reusing the jarvis data already on
@@ -192,6 +212,11 @@ truth. Expected keys:
 - `calendar.ical_urls` — one or more Google "secret address in iCal format"
   links. One-time copy-paste; documented with exact click-path in the README.
 - `news.feeds` — list of RSS feed URLs (sensible defaults provided).
+- `notion.token` — Notion integration token (for the habits database).
+- `notion.habits_database_id` — set once the database exists; left blank to have
+  the engine create it under `notion.parent_page_id` on first run.
+- `notion.parent_page_id` — the Notion page Omri shares with the integration,
+  under which the habits database is created.
 - `trading.jarvis_dir` — path to the jarvis data (default `~/.jarvis`).
 - `goals` — optional free-text goals shown on the board.
 - `panels` — ordered list of enabled panels + per-panel options (size, feeds,
@@ -211,6 +236,10 @@ The example template ships with placeholders and safe defaults so the board runs
   board stays up).
 - **News (RSS):** engine fetches each feed, merges, sorts by time, caps count.
   Cached briefly so the board feels instant and feeds aren't hammered.
+- **Habits (Notion):** engine reads the habits database and today's check-offs
+  on load; a tap writes the check-off back to Notion. Notion/network failures
+  return an error in the panel envelope (card shows "couldn't reach Notion", rest
+  of the board stays up). First-run database creation is one guarded step.
 - **Trading:** read from jarvis data on disk; if unavailable, panel shows a clear
   "no trading data found" state.
 - **Claude projects:** read directory metadata from `~/.claude/projects`.
@@ -271,6 +300,10 @@ University (courses, deadlines, assignments) · Email summary · Spotify
 now-playing & recent · Weather · Fitness/health · Finances beyond trading
 (bank/spend) · Reading/notes · Anything else Omri thinks of.
 
+Note: to-dos could also move into Notion later (same approach as habits) so
+everything Omri types lives in one place he can edit from his phone. Kept local
+in v1 to avoid blocking on more Notion setup.
+
 ---
 
 ## 12. Open questions / decisions to confirm in the plan
@@ -282,6 +315,8 @@ now-playing & recent · Weather · Fitness/health · Finances beyond trading
 2. **Trading read mechanism** — snapshot file vs. live jarvis API vs. thin T212
    fetch. Pick the simplest that gives a correct value + day change.
 3. **User-data store** — JSON to start, with a clear upgrade path to SQLite if
-   to-dos/habits history grows.
-4. **Habit definitions** — defined in settings, in the UI, or both. Lean toward
-   UI-add with settings as optional seed.
+   to-dos history grows.
+4. **Habits via Notion** — habits database schema (one row per habit + a per-day
+   log vs. a daily check-off table), and the exact first-run "share a page +
+   create database" flow. Confirm the one-time Notion setup steps are simple
+   enough; documented copy-paste in the README.
