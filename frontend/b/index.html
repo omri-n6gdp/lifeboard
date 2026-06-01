@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIFEBOARD // MISSION CONTROL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05090b; --panel:#0a1013; --line:#15301f; --line2:#102a30;
+  --green:#46f7a6; --cyan:#54d6e6; --amber:#f5b54a; --red:#ff6a5e; --dim:#5e7a72; --txt:#cfeede;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:"IBM Plex Mono",monospace; background:var(--bg); color:var(--txt); font-size:13px;
+  background-image:linear-gradient(rgba(70,247,166,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(70,247,166,.04) 1px,transparent 1px);
+  background-size:38px 38px; min-height:100vh;}
+/* scanlines + flicker */
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);mix-blend-mode:multiply;opacity:.5}
+.glow{text-shadow:0 0 8px currentColor}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 20px 60px}
+
+.bar{display:flex;align-items:center;gap:16px;border:1px solid var(--line);background:var(--panel);
+  padding:11px 16px;border-radius:6px;margin-bottom:16px;flex-wrap:wrap}
+.brand{color:var(--green);font-weight:700;letter-spacing:.18em}
+.brand b{color:var(--cyan)}
+.tag{color:var(--dim);letter-spacing:.12em}
+.spacer{margin-left:auto}
+.clock{color:var(--amber);font-weight:600;letter-spacing:.1em;font-size:15px}
+.led{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);margin-right:6px;animation:blink 2.4s infinite}
+@keyframes blink{0%,92%,100%{opacity:1}94%{opacity:.25}}
+.nav{display:flex;gap:6px}
+.nav a{color:var(--dim);text-decoration:none;border:1px solid var(--line2);padding:3px 9px;border-radius:4px;letter-spacing:.1em;font-size:11px}
+.nav a.here,.nav a:hover{color:var(--green);border-color:var(--green)}
+
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.mod{grid-column:span 4;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:14px;
+  position:relative;opacity:0;transform:translateY(10px);animation:up .5s ease forwards;animation-delay:calc(var(--i)*70ms)}
+@keyframes up{to{opacity:1;transform:none}}
+.mod.wide{grid-column:span 8}
+@media(max-width:980px){.mod,.mod.wide{grid-column:span 12}}
+.mh{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-bottom:9px;margin-bottom:11px}
+.mh .t{color:var(--green);letter-spacing:.16em;text-transform:uppercase;font-weight:600;font-size:12px}
+.mh .id{margin-left:auto;color:var(--dim);font-size:10px;letter-spacing:.1em}
+.mh::before{content:"▍";color:var(--green)}
+
+.ln{display:flex;gap:10px;padding:5px 0;border-bottom:1px dotted var(--line2)}
+.ln:last-child{border-bottom:0}
+.tm{color:var(--cyan);font-weight:600;min-width:52px}
+.txt1{color:var(--txt);flex:1;min-width:0}
+.txt1 a{color:var(--txt);text-decoration:none}.txt1 a:hover{color:var(--cyan)}
+.sub{color:var(--dim);font-size:11px}
+.warn{color:var(--amber);border:1px dashed var(--line);background:rgba(245,181,74,.05);padding:10px;border-radius:5px;line-height:1.5;font-size:12px}
+.warn b{color:var(--cyan)}
+.dimline{color:var(--dim);font-style:italic;padding:4px 0}
+
+/* todos */
+.addrow{display:flex;gap:7px;margin-bottom:8px}
+.addrow input{flex:1;background:#04080a;border:1px solid var(--line2);color:var(--green);font:inherit;
+  padding:8px 10px;border-radius:4px;caret-color:var(--green)}
+.addrow input:focus{outline:none;border-color:var(--green)}
+.addrow button{background:transparent;border:1px solid var(--green);color:var(--green);font:inherit;cursor:pointer;border-radius:4px;padding:0 12px;letter-spacing:.1em}
+.addrow button:hover{background:rgba(70,247,166,.12)}
+.ti{display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px dotted var(--line2)}
+.ti:last-child{border-bottom:0}
+.box{width:16px;height:16px;border:1px solid var(--green);border-radius:3px;display:grid;place-items:center;cursor:pointer;color:var(--bg);flex:none;font-size:11px}
+.ti.done .box{background:var(--green)}
+.ti .lbl{flex:1}.ti.done .lbl{color:var(--dim);text-decoration:line-through}
+.ti .x{color:var(--dim);cursor:pointer;border:0;background:none;font:inherit;opacity:0}
+.ti:hover .x{opacity:1}.ti .x:hover{color:var(--red)}
+
+/* habits */
+.hb{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dotted var(--line2)}
+.hb:last-child{border-bottom:0}
+.hbx{width:16px;height:16px;border:1px solid var(--amber);border-radius:50%;cursor:pointer;color:var(--bg);display:grid;place-items:center;flex:none;font-size:10px}
+.hb.done .hbx{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.hb .nm{flex:1}
+.stk{color:var(--amber);font-weight:700}
+
+/* trading */
+.val{font-size:30px;font-weight:700;color:var(--txt);letter-spacing:.02em}
+.dl{font-weight:600;margin-top:4px}
+.up{color:var(--green)}.down{color:var(--red)}
+.mv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--line2)}
+.mv:last-child{border-bottom:0}.mv .tk{color:var(--cyan);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <span class="brand glow">LIFE<b>BOARD</b></span>
+    <span class="tag">// OPERATOR: <span id="op">—</span></span>
+    <span class="spacer"></span>
+    <nav class="nav"><a href="/a">DAYBREAK</a><a href="/b" class="here">MISSION</a><a href="/c">LEDGER</a></nav>
+    <span class="tag" id="datestr"></span>
+    <span class="clock glow" id="clock">00:00:00</span>
+    <span class="tag"><span class="led"></span>ONLINE</span>
+  </div>
+  <div class="grid">
+    <section class="mod wide" id="m-cal" style="--i:0"></section>
+    <section class="mod" id="m-trading" style="--i:1"></section>
+    <section class="mod" id="m-todos" style="--i:2"></section>
+    <section class="mod" id="m-habits" style="--i:3"></section>
+    <section class="mod" id="m-claude" style="--i:4"></section>
+    <section class="mod wide" id="m-news" style="--i:5"></section>
+  </div>
+</div>
+
+<script src="/shared/lifeboard-core.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const mh=(t,id)=>`<div class="mh"><span class="t">${LB.esc(t)}</span><span class="id">${LB.esc(id)}</span></div>`;
+const warn=h=>`<div class="warn">${h}</div>`;
+
+function calMod(p){
+  if(p.status==="setup") return mh("Today / Calendar","CAL-01")+warn(`<b>NO FEED.</b> ${LB.esc(p.hint)}`);
+  if(p.status==="error") return mh("Today / Calendar","CAL-01")+warn("LINK UNREACHABLE.");
+  const it=p.items||[];
+  const rows=it.length?it.map(e=>`<div class="ln"><span class="tm">${e.all_day?"ALLDAY":LB.clockFromISO(e.start)}</span>
+    <span class="txt1">${LB.esc(e.title)}${e.location?` <span class="sub">· ${LB.esc(e.location)}</span>`:""}</span></div>`).join("")
+    :`<div class="dimline">// no events scheduled — clear board</div>`;
+  return mh("Today / Calendar","CAL-01 · "+it.length+" EVT")+rows;
+}
+function todoMod(p){
+  const it=p.items||[];
+  const rows=it.map(t=>`<div class="ti ${t.done?"done":""}" data-id="${t.id}">
+    <span class="box" data-act="toggle">${t.done?"✓":""}</span><span class="lbl">${LB.esc(t.text)}</span>
+    <button class="x" data-act="del">✕</button></div>`).join("")||`<div class="dimline">// queue empty</div>`;
+  return mh("Task Queue","TSK-02 · "+it.filter(t=>!t.done).length+" OPEN")+
+    `<div class="addrow"><input id="ti-in" placeholder="> new task" autocomplete="off"><button id="ti-add">ADD</button></div>`+rows;
+}
+function habitMod(p){
+  if(p.status==="setup") return mh("Habit Matrix","HBT-03")+warn(`<b>NOTION OFFLINE.</b> ${LB.esc(p.hint)}`);
+  if(p.status==="error") return mh("Habit Matrix","HBT-03")+warn("NOTION UNREACHABLE.");
+  const it=p.items||[];
+  const rows=it.length?it.map(h=>`<div class="hb ${h.done_today?"done":""}" data-page="${LB.esc(h.page_id)}">
+    <span class="hbx">${h.done_today?"✓":""}</span><span class="nm">${LB.esc(h.name)}</span>
+    <span class="stk">${h.streak?("⟫"+h.streak):"—"}</span></div>`).join("")
+    :`<div class="dimline">// no habits configured</div>`;
+  return mh("Habit Matrix","HBT-03")+rows;
+}
+function tradMod(p){
+  if(p.status!=="ok") return mh("Portfolio","FIN-04")+warn(`<b>NO TELEMETRY.</b> ${LB.esc(p.hint||"")}`);
+  const v=p.value||{};const up=(v.day_change_abs||0)>=0;
+  const mv=(p.items||[]).slice(0,5).map(m=>{const u=(m.day_change_pct||0)>=0;
+    return `<div class="mv"><span class="tk">${LB.esc(m.ticker)}</span><span class="${u?"up":"down"}">${LB.signedPct(m.day_change_pct)}</span></div>`;}).join("");
+  return mh("Portfolio","FIN-04")+`<div class="val glow">${LB.money(v.total_value)}</div>
+    <div class="dl ${up?"up":"down"}">${LB.signedMoney(v.day_change_abs)} / ${LB.signedPct(v.day_change_pct)} 24H</div>
+    <div style="margin-top:10px">${mv}</div>`;
+}
+function newsMod(p){
+  if(p.status==="error") return mh("Wire / News","NWS-06")+warn("FEED DOWN.");
+  const rows=(p.items||[]).slice(0,8).map(n=>`<div class="ln"><span class="tm" style="min-width:64px">${LB.esc((n.source||"").slice(0,6).toUpperCase())}</span>
+    <span class="txt1"><a href="${LB.esc(n.link)}" target="_blank" rel="noopener">${LB.esc(n.title)}</a></span>
+    <span class="sub">${LB.timeAgo(new Date(n.ts*1000).toISOString())}</span></div>`).join("")||`<div class="dimline">// no wire traffic</div>`;
+  return mh("Wire / News","NWS-06 · LIVE")+rows;
+}
+function claudeMod(p){
+  if(p.status!=="ok") return mh("Claude Ops","CLD-05")+warn(LB.esc(p.hint||""));
+  const rows=(p.items||[]).map(c=>`<div class="ln"><span class="txt1">${LB.esc(c.name)}</span>
+    <span class="sub">${c.sessions}s · ${LB.timeAgo(c.last_active)}</span></div>`).join("")||`<div class="dimline">// no projects</div>`;
+  return mh("Claude Ops","CLD-05")+rows;
+}
+
+function wireTodos(){
+  const c=$("#m-todos"),input=c.querySelector("#ti-in");
+  const go=async()=>{const v=input.value.trim();if(!v)return;const e=await LB.addTodo(v);c.innerHTML=todoMod(e);wireTodos();c.querySelector("#ti-in").focus();};
+  c.querySelector("#ti-add").onclick=go; input.onkeydown=e=>{if(e.key==="Enter")go();};
+  c.querySelectorAll(".ti").forEach(r=>{const id=r.dataset.id;
+    r.querySelector('[data-act="toggle"]').onclick=async()=>{const e=await LB.toggleTodo(id);c.innerHTML=todoMod(e);wireTodos();};
+    r.querySelector('[data-act="del"]').onclick=async()=>{const e=await LB.deleteTodo(id);c.innerHTML=todoMod(e);wireTodos();};});
+}
+function wireHabits(){
+  $("#m-habits").querySelectorAll(".hb").forEach(h=>{if(h.classList.contains("done"))return;
+    h.querySelector(".hbx").onclick=async()=>{const e=await LB.tickHabit(h.dataset.page);$("#m-habits").innerHTML=habitMod(e);wireHabits();};});
+}
+function tickClock(){const d=new Date();$("#clock").textContent=d.toLocaleTimeString([],{hour12:false});}
+setInterval(tickClock,1000);tickClock();
+$("#datestr").textContent=new Date().toLocaleDateString(undefined,{weekday:"short",day:"2-digit",month:"short"}).toUpperCase();
+
+(async function(){
+  try{
+    const b=await LB.board();
+    $("#op").textContent=(b.display_name||"OMRI").toUpperCase();
+    const m=LB.byId(b);
+    $("#m-cal").innerHTML=calMod(m.today_calendar||{status:"setup",hint:""});
+    $("#m-trading").innerHTML=tradMod(m.trading||{status:"setup"});
+    $("#m-todos").innerHTML=todoMod(m.today_todos||{items:[]});
+    $("#m-habits").innerHTML=habitMod(m.today_habits||{status:"setup",hint:""});
+    $("#m-claude").innerHTML=claudeMod(m.feeds_claude||{items:[]});
+    $("#m-news").innerHTML=newsMod(m.feeds_news||{items:[]});
+    wireTodos();wireHabits();
+  }catch(e){console.error(e);}
+})();
+</script>
+</body>
+</html>

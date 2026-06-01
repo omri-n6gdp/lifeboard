@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lifeboard · Daybreak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f4ede0; --card:#fffdf8; --ink:#2a251e; --muted:#8c8073;
+  --line:#e8dccb; --accent:#cf623a; --accent-soft:#f0d3bf; --amber:#e0a356;
+  --green:#5e8b5a; --shadow:0 18px 40px -24px rgba(74,52,32,.55);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:"Hanken Grotesk",system-ui,sans-serif;
+  color:var(--ink); background:var(--paper);
+  -webkit-font-smoothing:antialiased; min-height:100vh;
+  background-image:radial-gradient(120% 80% at 50% -10%, #f9e3c8 0%, rgba(249,227,200,0) 55%);
+}
+/* grain */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:9; opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.wrap{max-width:1180px; margin:0 auto; padding:46px 26px 80px}
+header.top{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:34px;
+  animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.hello{font-family:"Fraunces",serif; font-weight:600; font-size:clamp(34px,5vw,58px); line-height:1; letter-spacing:-.02em}
+.hello .name{color:var(--accent); font-style:italic}
+.subtitle{color:var(--muted); font-size:16px; margin-top:12px}
+.daychip{font-family:"Fraunces",serif; font-weight:500; font-size:15px; color:var(--ink);
+  background:var(--card); border:1px solid var(--line); padding:10px 16px; border-radius:999px; box-shadow:var(--shadow); white-space:nowrap}
+.nav{display:flex; gap:8px; margin-top:14px}
+.nav a{font-size:13px; color:var(--muted); text-decoration:none; padding:5px 11px; border-radius:999px; border:1px solid transparent}
+.nav a.here{color:var(--accent); border-color:var(--accent-soft); background:#fff7ef}
+.nav a:hover{color:var(--ink)}
+
+.grid{display:grid; grid-template-columns:1.15fr 1fr 1fr; gap:20px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.col{display:flex; flex-direction:column; gap:20px}
+
+.card{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:20px 21px;
+  box-shadow:var(--shadow); position:relative; opacity:0; transform:translateY(14px);
+  animation:rise .65s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:calc(var(--i,0)*90ms + 120ms)}
+@keyframes rise{to{opacity:1; transform:none}}
+.card h2{margin:0 0 14px; font-family:"Fraunces",serif; font-weight:600; font-size:20px; letter-spacing:-.01em;
+  display:flex; align-items:center; gap:9px}
+.card h2 .dot{width:8px; height:8px; border-radius:50%; background:var(--accent)}
+.card .meta{margin-left:auto; font-size:11px; color:var(--muted); font-weight:500; letter-spacing:.04em; text-transform:uppercase}
+
+.row{display:flex; gap:11px; align-items:flex-start; padding:9px 0; border-bottom:1px dashed var(--line)}
+.row:last-child{border-bottom:0}
+.lead{font-variant-numeric:tabular-nums; font-weight:600; color:var(--accent); min-width:48px; font-size:14px}
+.body{flex:1; min-width:0}
+.t1{font-weight:600; font-size:15px; line-height:1.3}
+.t2{color:var(--muted); font-size:12.5px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+a.t1{color:var(--ink); text-decoration:none}
+a.t1:hover{color:var(--accent)}
+
+/* setup / empty */
+.setup{font-size:13.5px; color:var(--muted); line-height:1.5; background:#fbf4ea; border:1px dashed var(--line);
+  border-radius:13px; padding:13px 14px}
+.setup b{color:var(--accent); font-weight:600}
+.empty{color:var(--muted); font-size:13.5px; font-style:italic; padding:6px 0}
+
+/* todos */
+.todoadd{display:flex; gap:8px; margin-bottom:6px}
+.todoadd input{flex:1; font:inherit; font-size:14px; padding:10px 13px; border:1px solid var(--line);
+  border-radius:11px; background:#fffaf2; color:var(--ink)}
+.todoadd input:focus{outline:none; border-color:var(--accent); background:#fff}
+.todoadd button{font:inherit; font-weight:600; font-size:14px; color:#fff; background:var(--accent);
+  border:0; border-radius:11px; padding:0 15px; cursor:pointer}
+.todoadd button:hover{filter:brightness(1.05)}
+.todo{display:flex; align-items:center; gap:11px; padding:8px 0; border-bottom:1px dashed var(--line)}
+.todo:last-child{border-bottom:0}
+.check{width:21px; height:21px; border-radius:7px; border:2px solid var(--accent-soft); cursor:pointer; flex:none;
+  display:grid; place-items:center; transition:.2s; color:#fff}
+.check:hover{border-color:var(--accent)}
+.todo.done .check{background:var(--green); border-color:var(--green)}
+.todo .txt{flex:1; font-size:15px}
+.todo.done .txt{color:var(--muted); text-decoration:line-through}
+.todo .del{opacity:0; cursor:pointer; color:var(--muted); font-size:18px; line-height:1; border:0; background:none; padding:4px}
+.todo:hover .del{opacity:1}
+.todo .del:hover{color:var(--accent)}
+
+/* habits */
+.habit{display:flex; align-items:center; gap:11px; padding:9px 0; border-bottom:1px dashed var(--line)}
+.habit:last-child{border-bottom:0}
+.habit .tick{width:23px; height:23px; border-radius:50%; border:2px solid var(--accent-soft); cursor:pointer; flex:none;
+  display:grid; place-items:center; color:#fff; transition:.2s}
+.habit.done .tick{background:var(--accent); border-color:var(--accent); transform:scale(1.04)}
+.habit .hn{flex:1; font-size:15px; font-weight:500}
+.streak{font-size:12.5px; color:var(--amber); font-weight:700; font-variant-numeric:tabular-nums}
+
+/* trading */
+.bignum{font-family:"Fraunces",serif; font-weight:600; font-size:38px; letter-spacing:-.02em; line-height:1}
+.delta{font-weight:700; font-size:14px; margin-top:6px}
+.up{color:var(--green)} .down{color:var(--accent)}
+.mover{display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px dashed var(--line); font-size:14px}
+.mover:last-child{border-bottom:0}
+.mover .tk{font-weight:600}
+.pill{font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700}
+.pill.up{background:#e9f1e7} .pill.down{background:#f7e3da}
+.foot{text-align:center; color:var(--muted); font-size:12px; margin-top:42px; font-family:"Fraunces",serif; font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="hello" id="hello">Hello</div>
+      <div class="subtitle" id="goals"></div>
+      <nav class="nav">
+        <a href="/a" class="here">Daybreak</a><a href="/b">Mission Control</a><a href="/c">The Ledger</a>
+      </nav>
+    </div>
+    <div class="daychip" id="day"></div>
+  </header>
+  <div class="grid">
+    <div class="col">
+      <section class="card" id="c-cal" style="--i:0"></section>
+      <section class="card" id="c-habits" style="--i:1"></section>
+    </div>
+    <div class="col">
+      <section class="card" id="c-todos" style="--i:2"></section>
+      <section class="card" id="c-trading" style="--i:3"></section>
+    </div>
+    <div class="col">
+      <section class="card" id="c-news" style="--i:4"></section>
+      <section class="card" id="c-claude" style="--i:5"></section>
+    </div>
+  </div>
+  <div class="foot">Lifeboard · a place for the whole of it</div>
+</div>
+
+<script src="/shared/lifeboard-core.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const head = (t, meta) => `<h2><span class="dot"></span>${LB.esc(t)}${meta?`<span class="meta">${LB.esc(meta)}</span>`:""}</h2>`;
+const setupBox = h => `<div class="setup">${h}</div>`;
+
+function calCard(p){
+  if(p.status==="setup") return head("Today")+setupBox(`<b>Connect your calendar.</b> ${LB.esc(p.hint)}`);
+  if(p.status==="error") return head("Today")+setupBox("Couldn't reach your calendar right now.");
+  const items = p.items||[];
+  const rows = items.length ? items.map(e=>`
+    <div class="row"><div class="lead">${e.all_day?"all day":LB.clockFromISO(e.start)}</div>
+    <div class="body"><div class="t1">${LB.esc(e.title)}</div>${e.location?`<div class="t2">${LB.esc(e.location)}</div>`:""}</div></div>`).join("")
+    : `<div class="empty">Nothing on the calendar today. A clear page.</div>`;
+  return head("Today", items.length+" events")+rows;
+}
+
+function todoCard(p){
+  const items = p.items||[];
+  const rows = items.map(t=>`
+    <div class="todo ${t.done?"done":""}" data-id="${t.id}">
+      <div class="check" data-act="toggle">${t.done?"✓":""}</div>
+      <div class="txt">${LB.esc(t.text)}</div>
+      <button class="del" data-act="del">×</button>
+    </div>`).join("") || `<div class="empty">No tasks yet — add the first one.</div>`;
+  return head("To-do", items.filter(t=>!t.done).length+" left")+
+    `<div class="todoadd"><input id="todo-in" placeholder="Add a task…" autocomplete="off"><button id="todo-add">Add</button></div>`+rows;
+}
+
+function habitCard(p){
+  if(p.status==="setup") return head("Habits")+setupBox(`<b>Connect Notion.</b> ${LB.esc(p.hint)}`);
+  if(p.status==="error") return head("Habits")+setupBox("Couldn't reach Notion right now.");
+  const items=p.items||[];
+  const rows = items.length ? items.map(h=>`
+    <div class="habit ${h.done_today?"done":""}" data-page="${LB.esc(h.page_id)}">
+      <div class="tick">${h.done_today?"✓":""}</div>
+      <div class="hn">${LB.esc(h.name)}</div>
+      <div class="streak">${h.streak?("🔥 "+h.streak):""}</div>
+    </div>`).join("") : `<div class="empty">No habits yet — add some in Notion.</div>`;
+  return head("Habits")+rows;
+}
+
+function tradingCard(p){
+  if(p.status!=="ok"){
+    return head("Trading & money")+setupBox(`<b>Hook up your portfolio.</b> ${LB.esc(p.hint||"No data yet.")}`);
+  }
+  const v=p.value||{}; const up=(v.day_change_abs||0)>=0;
+  const movers=(p.items||[]).slice(0,5).map(m=>{
+    const mu=(m.day_change_pct||0)>=0;
+    return `<div class="mover"><span class="tk">${LB.esc(m.ticker)}</span>
+      <span class="pill ${mu?"up":"down"}">${LB.signedPct(m.day_change_pct)}</span></div>`;}).join("");
+  return head("Trading & money")+
+    `<div class="bignum">${LB.money(v.total_value)}</div>
+     <div class="delta ${up?"up":"down"}">${LB.signedMoney(v.day_change_abs)} · ${LB.signedPct(v.day_change_pct)} today</div>
+     <div style="margin-top:14px">${movers}</div>`;
+}
+
+function newsCard(p){
+  if(p.status==="error") return head("News")+setupBox("Couldn't load news right now.");
+  const rows=(p.items||[]).slice(0,9).map(n=>`
+    <div class="row"><div class="body">
+      <a class="t1" href="${LB.esc(n.link)}" target="_blank" rel="noopener">${LB.esc(n.title)}</a>
+      <div class="t2">${LB.esc(n.source)} · ${LB.timeAgo(new Date(n.ts*1000).toISOString())}</div>
+    </div></div>`).join("") || `<div class="empty">No headlines.</div>`;
+  return head("News")+rows;
+}
+
+function claudeCard(p){
+  if(p.status!=="ok") return head("Claude projects")+setupBox(LB.esc(p.hint||"No projects."));
+  const rows=(p.items||[]).map(c=>`
+    <div class="row"><div class="body"><div class="t1">${LB.esc(c.name)}</div>
+    <div class="t2">${c.sessions} session${c.sessions==1?"":"s"} · ${LB.timeAgo(c.last_active)}</div></div></div>`).join("")
+    || `<div class="empty">No projects yet.</div>`;
+  return head("Claude projects")+rows;
+}
+
+function wireTodos(){
+  const card=$("#c-todos");
+  const input=card.querySelector("#todo-in");
+  const submit=async()=>{ const v=input.value.trim(); if(!v) return; const env=await LB.addTodo(v); card.innerHTML=todoCard(env); wireTodos(); card.querySelector("#todo-in").focus(); };
+  card.querySelector("#todo-add").onclick=submit;
+  input.onkeydown=e=>{ if(e.key==="Enter") submit(); };
+  card.querySelectorAll(".todo").forEach(row=>{
+    const id=row.dataset.id;
+    row.querySelector('[data-act="toggle"]').onclick=async()=>{ const env=await LB.toggleTodo(id); card.innerHTML=todoCard(env); wireTodos(); };
+    row.querySelector('[data-act="del"]').onclick=async()=>{ const env=await LB.deleteTodo(id); card.innerHTML=todoCard(env); wireTodos(); };
+  });
+}
+function wireHabits(){
+  $("#c-habits").querySelectorAll(".habit").forEach(h=>{
+    if(h.classList.contains("done")) return;
+    h.querySelector(".tick").onclick=async()=>{ const env=await LB.tickHabit(h.dataset.page); $("#c-habits").innerHTML=habitCard(env); wireHabits(); };
+  });
+}
+
+(async function(){
+  $("#day").textContent=LB.longDate();
+  try{
+    const board=await LB.board();
+    $("#hello").innerHTML=`${LB.greeting()}, <span class="name">${LB.esc(board.display_name||"friend")}</span>`;
+    if((board.goals||[]).length) $("#goals").textContent="Today’s intention — "+board.goals.join(" · ");
+    const m=LB.byId(board);
+    $("#c-cal").innerHTML=calCard(m.today_calendar||{status:"setup",hint:""});
+    $("#c-habits").innerHTML=habitCard(m.today_habits||{status:"setup",hint:""});
+    $("#c-todos").innerHTML=todoCard(m.today_todos||{items:[]});
+    $("#c-trading").innerHTML=tradingCard(m.trading||{status:"setup"});
+    $("#c-news").innerHTML=newsCard(m.feeds_news||{items:[]});
+    $("#c-claude").innerHTML=claudeCard(m.feeds_claude||{items:[]});
+    wireTodos(); wireHabits();
+  }catch(e){ $("#hello").textContent="Couldn't load the board"; console.error(e); }
+})();
+</script>
+</body>
+</html>

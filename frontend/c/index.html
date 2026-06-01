@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lifeboard Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f3efe6;--ink:#16130d;--red:#8c2f1d;--muted:#5d574a;--line:#1d180f;--hair:#c9c1b0}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Newsreader",Georgia,serif;background:var(--paper);color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");}
+.paper{max-width:1140px;margin:0 auto;padding:26px 28px 80px}
+/* masthead */
+.mast{text-align:center;border-bottom:3px double var(--line);padding-bottom:12px}
+.kick{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-bottom:8px}
+.title{font-family:"Libre Caslon Display",serif;font-size:clamp(44px,9vw,92px);line-height:.95;letter-spacing:-.01em}
+.dateline{display:flex;justify-content:center;gap:14px;align-items:center;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px 0}
+.nav{display:flex;gap:4px}
+.nav a{color:var(--muted);text-decoration:none;border-bottom:2px solid transparent}
+.nav a.here,.nav a:hover{color:var(--red);border-color:var(--red)}
+
+.cols{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;margin-top:18px}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+.col{padding:0 18px}
+.col + .col{border-left:1px solid var(--hair)}
+@media(max-width:900px){.col + .col{border-left:0;border-top:1px solid var(--hair);margin-top:10px;padding-top:10px}}
+
+.sec{margin-bottom:22px;opacity:0;transform:translateY(10px);animation:fc .6s ease forwards;animation-delay:calc(var(--i)*80ms)}
+@keyframes fc{to{opacity:1;transform:none}}
+.sh{font-family:"Libre Caslon Display",serif;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+  text-align:center;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:11px;position:relative}
+.lead-head{font-family:"Libre Caslon Display",serif;font-size:30px;line-height:1.06;margin-bottom:4px}
+.lead-head a{color:var(--ink);text-decoration:none}.lead-head a:hover{color:var(--red)}
+.byl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+
+.item{padding:7px 0;border-bottom:1px solid var(--hair)}
+.item:last-child{border-bottom:0}
+.hl{font-size:18px;line-height:1.2}.hl a{color:var(--ink);text-decoration:none}.hl a:hover{color:var(--red)}
+.meta{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.time{font-family:"Libre Caslon Display",serif;color:var(--red);font-size:15px;margin-right:8px}
+.note{color:var(--muted);font-style:italic;font-size:15px;padding:6px 0}
+.callout{border:1px solid var(--line);background:rgba(140,47,29,.04);padding:11px 12px;font-size:14px;line-height:1.45}
+.callout b{color:var(--red)}
+
+/* markets */
+.figure{font-family:"Libre Caslon Display",serif;font-size:40px;line-height:1;margin:2px 0}
+.chg{font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.up{color:#2f6b34}.down{color:var(--red)}
+.tbl{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+.tbl td{padding:4px 0;border-bottom:1px solid var(--hair)}
+.tbl td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.tk{font-weight:600}
+
+/* todos / habits */
+.add{display:flex;gap:6px;border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:8px}
+.add input{flex:1;font:inherit;font-size:16px;border:0;background:transparent;color:var(--ink)}
+.add input:focus{outline:none}
+.add button{font-family:"Libre Caslon Display",serif;font-size:13px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);background:transparent;cursor:pointer;padding:4px 11px}
+.add button:hover{background:var(--ink);color:var(--paper)}
+.ck{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--hair)}
+.ck:last-child{border-bottom:0}
+.mk{width:18px;height:18px;border:1.5px solid var(--ink);cursor:pointer;flex:none;display:grid;place-items:center;font-size:13px}
+.ck.done .mk{background:var(--ink);color:var(--paper)}
+.ck .lb{flex:1;font-size:16px}.ck.done .lb{color:var(--muted);text-decoration:line-through}
+.ck .rm{border:0;background:none;color:var(--muted);cursor:pointer;font:inherit;opacity:0}
+.ck:hover .rm{opacity:1}.ck .rm:hover{color:var(--red)}
+.disc{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--hair)}
+.disc:last-child{border-bottom:0}
+.dmk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--red);cursor:pointer;flex:none;display:grid;place-items:center;font-size:12px}
+.disc.done .dmk{background:var(--red);color:var(--paper)}
+.disc .nm{flex:1;font-size:16px}.streak{font-family:"Libre Caslon Display",serif;color:var(--red)}
+</style>
+</head>
+<body>
+<div class="paper">
+  <div class="mast">
+    <div class="kick"><span>Vol. I · Personal Edition</span><span>“All The Life That’s Fit To Track”</span><span id="price">Price: Free</span></div>
+    <div class="title">The Lifeboard Ledger</div>
+    <div class="dateline">
+      <span id="dateL"></span>
+      <nav class="nav"><a href="/a">Daybreak</a> · <a href="/b">Mission</a> · <a href="/c" class="here">Ledger</a></nav>
+      <span id="editionL">Morning Edition</span>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <section class="sec" id="s-news" style="--i:0"></section>
+    </div>
+    <div class="col">
+      <section class="sec" id="s-cal" style="--i:1"></section>
+      <section class="sec" id="s-todos" style="--i:2"></section>
+    </div>
+    <div class="col">
+      <section class="sec" id="s-trading" style="--i:3"></section>
+      <section class="sec" id="s-habits" style="--i:4"></section>
+      <section class="sec" id="s-claude" style="--i:5"></section>
+    </div>
+  </div>
+</div>
+
+<script src="/shared/lifeboard-core.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const sh=t=>`<div class="sh">${LB.esc(t)}</div>`;
+
+function newsSec(p){
+  const it=p.items||[];
+  if(p.status==="error"||!it.length) return sh("The World")+`<div class="note">No dispatches at this hour.</div>`;
+  const lead=it[0];
+  const leadHtml=`<div class="lead-head"><a href="${LB.esc(lead.link)}" target="_blank" rel="noopener">${LB.esc(lead.title)}</a></div>
+    <div class="byl">${LB.esc(lead.source)} · ${LB.timeAgo(new Date(lead.ts*1000).toISOString())}</div>`;
+  const rest=it.slice(1,8).map(n=>`<div class="item"><div class="hl"><a href="${LB.esc(n.link)}" target="_blank" rel="noopener">${LB.esc(n.title)}</a></div>
+    <div class="meta">${LB.esc(n.source)} · ${LB.timeAgo(new Date(n.ts*1000).toISOString())}</div></div>`).join("");
+  return sh("The World")+leadHtml+rest;
+}
+function calSec(p){
+  if(p.status==="setup") return sh("The Day Ahead")+`<div class="callout"><b>No diary connected.</b> ${LB.esc(p.hint)}</div>`;
+  if(p.status==="error") return sh("The Day Ahead")+`<div class="callout">The diary could not be reached.</div>`;
+  const it=p.items||[];
+  const rows=it.length?it.map(e=>`<div class="item"><span class="time">${e.all_day?"—":LB.clockFromISO(e.start)}</span>
+    <span class="hl">${LB.esc(e.title)}</span>${e.location?`<div class="meta">${LB.esc(e.location)}</div>`:""}</div>`).join("")
+    :`<div class="note">The day stands open and unclaimed.</div>`;
+  return sh("The Day Ahead")+rows;
+}
+function todoSec(p){
+  const it=p.items||[];
+  const rows=it.map(t=>`<div class="ck ${t.done?"done":""}" data-id="${t.id}">
+    <span class="mk" data-act="toggle">${t.done?"✓":""}</span><span class="lb">${LB.esc(t.text)}</span>
+    <button class="rm" data-act="del">discard</button></div>`).join("")||`<div class="note">Nothing noted for action.</div>`;
+  return sh("Matters Arising")+`<div class="add"><input id="c-in" placeholder="Note a task…" autocomplete="off"><button id="c-add">File</button></div>`+rows;
+}
+function habitSec(p){
+  if(p.status==="setup") return sh("Daily Disciplines")+`<div class="callout"><b>Notion not yet engaged.</b> ${LB.esc(p.hint)}</div>`;
+  if(p.status==="error") return sh("Daily Disciplines")+`<div class="callout">Notion could not be reached.</div>`;
+  const it=p.items||[];
+  const rows=it.length?it.map(h=>`<div class="disc ${h.done_today?"done":""}" data-page="${LB.esc(h.page_id)}">
+    <span class="dmk">${h.done_today?"✓":""}</span><span class="nm">${LB.esc(h.name)}</span>
+    <span class="streak">${h.streak?(h.streak+" days"):""}</span></div>`).join("")
+    :`<div class="note">No disciplines yet recorded.</div>`;
+  return sh("Daily Disciplines")+rows;
+}
+function tradSec(p){
+  if(p.status!=="ok") return sh("Markets")+`<div class="callout"><b>No quotations.</b> ${LB.esc(p.hint||"")}</div>`;
+  const v=p.value||{};const up=(v.day_change_abs||0)>=0;
+  const tbl=(p.items||[]).slice(0,5).map(m=>{const u=(m.day_change_pct||0)>=0;
+    return `<tr><td class="tk">${LB.esc(m.ticker)}</td><td class="${u?"up":"down"}">${LB.signedPct(m.day_change_pct)}</td></tr>`;}).join("");
+  return sh("Markets")+`<div class="figure">${LB.money(v.total_value)}</div>
+    <div class="chg ${up?"up":"down"}">${LB.signedMoney(v.day_change_abs)} · ${LB.signedPct(v.day_change_pct)} on the day</div>
+    <table class="tbl">${tbl}</table>`;
+}
+function claudeSec(p){
+  if(p.status!=="ok") return sh("The Workshop")+`<div class="note">${LB.esc(p.hint||"")}</div>`;
+  const rows=(p.items||[]).map(c=>`<div class="item"><span class="hl">${LB.esc(c.name)}</span>
+    <div class="meta">${c.sessions} session${c.sessions==1?"":"s"} · ${LB.timeAgo(c.last_active)}</div></div>`).join("")||`<div class="note">The workshop is quiet.</div>`;
+  return sh("The Workshop")+rows;
+}
+
+function wireTodos(){
+  const c=$("#s-todos"),input=c.querySelector("#c-in");
+  const go=async()=>{const v=input.value.trim();if(!v)return;const e=await LB.addTodo(v);c.innerHTML=todoSec(e);wireTodos();c.querySelector("#c-in").focus();};
+  c.querySelector("#c-add").onclick=go;input.onkeydown=e=>{if(e.key==="Enter")go();};
+  c.querySelectorAll(".ck").forEach(r=>{const id=r.dataset.id;
+    r.querySelector('[data-act="toggle"]').onclick=async()=>{const e=await LB.toggleTodo(id);c.innerHTML=todoSec(e);wireTodos();};
+    r.querySelector('[data-act="del"]').onclick=async()=>{const e=await LB.deleteTodo(id);c.innerHTML=todoSec(e);wireTodos();};});
+}
+function wireHabits(){
+  $("#s-habits").querySelectorAll(".disc").forEach(h=>{if(h.classList.contains("done"))return;
+    h.querySelector(".dmk").onclick=async()=>{const e=await LB.tickHabit(h.dataset.page);$("#s-habits").innerHTML=habitSec(e);wireHabits();};});
+}
+
+$("#dateL").textContent=LB.longDate().toUpperCase();
+$("#editionL").textContent=(new Date().getHours()<12?"Morning":new Date().getHours()<18?"Afternoon":"Evening")+" Edition";
+
+(async function(){
+  try{
+    const b=await LB.board();
+    if(b.display_name) $("#price").textContent="Edition: "+b.display_name;
+    const m=LB.byId(b);
+    $("#s-news").innerHTML=newsSec(m.feeds_news||{items:[]});
+    $("#s-cal").innerHTML=calSec(m.today_calendar||{status:"setup",hint:""});
+    $("#s-todos").innerHTML=todoSec(m.today_todos||{items:[]});
+    $("#s-trading").innerHTML=tradSec(m.trading||{status:"setup"});
+    $("#s-habits").innerHTML=habitSec(m.today_habits||{status:"setup",hint:""});
+    $("#s-claude").innerHTML=claudeSec(m.feeds_claude||{items:[]});
+    wireTodos();wireHabits();
+  }catch(e){console.error(e);}
+})();
+</script>
+</body>
+</html>

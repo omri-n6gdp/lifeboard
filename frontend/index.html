@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lifeboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:"Hanken Grotesk",system-ui,sans-serif; min-height:100vh; background:#1b1714; color:#f4ede0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px;
+  background-image:radial-gradient(120% 90% at 50% 0%, #3a2c20 0%, #1b1714 55%);}
+h1{font-family:"Fraunces",serif; font-weight:600; font-size:clamp(40px,8vw,84px); letter-spacing:-.03em; line-height:1}
+h1 em{color:#cf623a; font-style:italic}
+.sub{color:#a89a89; margin:14px 0 46px; font-size:17px; text-align:center; max-width:520px}
+.cards{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; max-width:880px; width:100%}
+@media(max-width:760px){.cards{grid-template-columns:1fr}}
+a.choice{text-decoration:none; color:inherit; border:1px solid #3a322a; border-radius:18px; padding:26px 22px;
+  background:#241e19; transition:.25s; display:block}
+a.choice:hover{transform:translateY(-4px); border-color:#cf623a; background:#2a221b}
+.kex{font-family:"Fraunces",serif; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:#cf623a}
+.cn{font-family:"Fraunces",serif; font-size:26px; font-weight:600; margin:8px 0 8px}
+.cd{color:#a89a89; font-size:14px; line-height:1.5}
+.foot{margin-top:42px; color:#6f6457; font-size:13px}
+</style>
+</head>
+<body>
+  <h1>Life<em>board</em></h1>
+  <p class="sub">Everything in one place. Pick a look — they all show the same board, you can switch any time.</p>
+  <div class="cards">
+    <a class="choice" href="/a"><div class="kex">Design A</div><div class="cn">Daybreak</div>
+      <div class="cd">Calm and warm. Paper tones, soft type, a pleasant morning check-in.</div></a>
+    <a class="choice" href="/b"><div class="kex">Design B</div><div class="cn">Mission Control</div>
+      <div class="cd">Dense and glowing. A dark command-center with everything at once.</div></a>
+    <a class="choice" href="/c"><div class="kex">Design C</div><div class="cn">The Ledger</div>
+      <div class="cd">Editorial and bold. Big type, rules, a printed-broadsheet feel.</div></a>
+  </div>
+  <div class="foot">Running locally · just for you</div>
+</body>
+</html>
