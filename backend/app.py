@@ -8,27 +8,30 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from backend.config import load_config
-from backend.providers import (calendar_ical, news_rss, trading_jarvis,
-                               claude_projects, todos, habits_notion)
+from backend.providers import (calendar_panel, news_rss, trading_jarvis,
+                               claude_projects, todos, habits_notion,
+                               weather, spotify)
 
 FRONTEND = pathlib.Path(__file__).parent.parent / "frontend"
 app = FastAPI(title="Lifeboard")
 
 # panel id -> provider callable(cfg)
 PROVIDERS = {
-    "today_calendar": calendar_ical.provider,
+    "today_weather": weather.provider,
+    "today_calendar": calendar_panel.provider,
     "today_todos": todos.provider,
     "today_habits": habits_notion.provider,
     "trading": trading_jarvis.provider,
     "feeds_claude": claude_projects.provider,
     "feeds_news": news_rss.provider,
+    "spotify": spotify.provider,
 }
 
 # group key -> ordered panel ids (a "panel group" is what config enables)
 GROUPS = {
-    "today": ["today_calendar", "today_todos", "today_habits"],
+    "today": ["today_weather", "today_calendar", "today_todos", "today_habits"],
     "trading": ["trading"],
-    "feeds": ["feeds_claude", "feeds_news"],
+    "feeds": ["spotify", "feeds_claude", "feeds_news"],
 }
 
 

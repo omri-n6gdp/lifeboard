@@ -14,9 +14,11 @@ def isolated(tmp_path, monkeypatch):
     cfg = {
         "display_name": "Test", "goals": [], "theme": "a",
         "panels": ["today", "feeds"],
-        "calendar": {"ical_urls": []},
+        "calendar": {"source": "ical", "ical_urls": []},
+        "weather": {},
         "news": {"feeds": [], "max_items": 5},
         "notion": {"token": "", "habits_database_id": "", "parent_page_id": ""},
+        "spotify": {},
         "trading": {"jarvis_dir": "/no", "jarvis_api_url": ""},
         "claude": {"projects_dir": str(tmp_path / "noproj")},
     }
