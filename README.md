@@ -12,17 +12,25 @@ There are three looks to choose from (you can switch any time):
 
 ## Run it
 
-Open Terminal and paste:
+**Easiest — the Dock app.** Open **Lifeboard** from your Applications folder (drag
+it onto the Dock to keep it there). One click starts the engine *and* opens the
+board. To (re)build the app after updates:
+
+```bash
+cd ~/code/lifeboard
+bash tools/build_app.sh
+```
+
+**Or from Terminal:**
 
 ```bash
 cd ~/code/lifeboard
 ./run.sh
 ```
 
-Then open **http://localhost:8787** in your browser. Pick a design and you're in.
-
-To stop it, click the Terminal window and press `Control + C`.
-To use a different port: `./run.sh 9000` → open http://localhost:9000.
+Either way the board opens at **http://localhost:8787** — pick a design and
+you're in. To stop the Terminal version, press `Control + C`. Different port:
+`./run.sh 9000`.
 
 ---
 
@@ -32,24 +40,35 @@ Everything personal lives in one file: **`~/.lifeboard/config.json`**.
 Open it in any text editor. Nothing is hidden in the code — this one file is
 all of it. (A blank starter is created for you the first time.)
 
-Out of the box you already get: **live world news**, your **Claude projects**,
-and a working **to-do list**. The calendar, habits, and trading panels show a
-friendly "set up" note until you add the bits below.
+Out of the box you already get: **live world news**, **weather** (set to London),
+your **Claude projects**, and a working **to-do list**. The calendar, habits,
+trading, and Spotify panels show a friendly "set up" note until you do the steps
+below.
 
-### Calendar (2 minutes, no account-linking)
+### Calendar — your Apple Calendar
 
-1. Open **Google Calendar** in a browser → click the ⚙️ gear → **Settings**.
-2. On the left, under *Settings for my calendars*, click the calendar you want.
-3. Scroll to **Integrate calendar** → copy the **Secret address in iCal format**
-   (the long link ending in `.ics`).
-4. Paste it into `~/.lifeboard/config.json` like this:
+Lifeboard reads **today's events straight from the Calendar app**. The first time,
+macOS asks permission:
 
-   ```json
-   "calendar": { "ical_urls": ["PASTE-YOUR-SECRET-LINK-HERE"] }
-   ```
-5. Save the file and refresh the page. Today's events appear.
+1. Open the board. A box pops up: *"Lifeboard wants access to control Calendar."*
+   Click **OK**. (Missed it? System Settings → Privacy & Security → **Automation**
+   → turn on **Calendar** under Lifeboard.)
+2. Refresh — today's events appear. No links to copy.
 
-> The "secret" link is read-only and private to you. Keep it to yourself.
+> Prefer a Google/other calendar by link instead? Set
+> `"calendar": { "source": "ical", "ical_urls": ["YOUR-SECRET-ICS-LINK"] }`.
+
+### Weather
+
+Your location is already set to **London** in `~/.lifeboard/config.json`. Change it
+to anywhere:
+
+```json
+"weather": { "place": "Tel Aviv", "units": "celsius" }
+```
+
+Use any place name (or set `"latitude"`/`"longitude"` directly); `"units"` can be
+`"fahrenheit"`. No API key needed.
 
 ### Habits (lives in Notion, so you can tick them off your phone too)
 
@@ -80,6 +99,21 @@ If your Trading 212 / jarvis dashboard is running, point Lifeboard at it:
 `day_change_pct`, and a `holdings` list) into `~/.jarvis`. Until then the panel
 just shows a "hook up your portfolio" note.
 
+### Spotify (now playing + recently played)
+
+1. Make a free app at **developer.spotify.com/dashboard**. Note its **Client ID**
+   and **Client Secret**, and in its settings add this Redirect URI:
+   `http://127.0.0.1:8765/callback`.
+2. In Terminal, run the one-time helper:
+
+   ```bash
+   cd ~/code/lifeboard
+   .venv/bin/python tools/spotify_auth.py
+   ```
+   Paste the Client ID/Secret when asked; your browser opens to approve access.
+   The token is saved for you automatically.
+3. Refresh the board — your current track and recent plays appear.
+
 ---
 
 ## Switching designs
@@ -100,8 +134,8 @@ Lifeboard is built so a new life area is a small, contained job:
 3. **Show it** — add a small render function to each design (or just the one you
    use) and a settings line in `config.json`.
 
-That's it — the engine core and the other panels don't change. Ideas already
-sketched for later: University, email, Spotify now-playing, weather, fitness.
+That's it — the engine core and the other panels don't change. Ideas for later:
+University, email, fitness/health, reading — whatever you think of.
 
 ---
 

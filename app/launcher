@@ -1,0 +1,8 @@
+#!/bin/bash
+# Lifeboard — Dock launcher. Hands off to the project launch script.
+LAUNCH="$HOME/code/lifeboard/launch.sh"
+if [ -x "$LAUNCH" ]; then
+  exec "$LAUNCH"
+else
+  osascript -e 'display alert "Lifeboard" message "Launcher not found at ~/code/lifeboard/launch.sh"'
+fi

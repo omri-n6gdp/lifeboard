@@ -106,6 +106,22 @@ a.t1:hover{color:var(--accent)}
 .pill{font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700}
 .pill.up{background:#e9f1e7} .pill.down{background:#f7e3da}
 .foot{text-align:center; color:var(--muted); font-size:12px; margin-top:42px; font-family:"Fraunces",serif; font-style:italic}
+/* weather */
+.wx{display:flex;align-items:center;gap:15px}
+.wx .em{font-size:46px;line-height:1}
+.wx .tnow{font-family:"Fraunces",serif;font-weight:600;font-size:34px;line-height:1}
+.wx .wmeta{color:var(--muted);font-size:12.5px;margin-top:4px}
+.wxhours{display:flex;gap:16px;margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+.wxhours div.h{text-align:center;font-size:11px;color:var(--muted)}
+.wxhours .h-em{font-size:18px;margin:2px 0}
+.wxhours .h-t{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;font-size:13px}
+/* spotify */
+.sp-now{display:flex;gap:12px;align-items:center}
+.sp-art{width:56px;height:56px;border-radius:11px;object-fit:cover;box-shadow:var(--shadow)}
+.sp-track{font-weight:600;font-size:15px;line-height:1.25}
+.sp-artist{color:var(--muted);font-size:13px;margin-top:2px}
+.sp-badge{font-size:11px;color:var(--green);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.sp-badge.paused{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -122,16 +138,18 @@ a.t1:hover{color:var(--accent)}
   </header>
   <div class="grid">
     <div class="col">
-      <section class="card" id="c-cal" style="--i:0"></section>
-      <section class="card" id="c-habits" style="--i:1"></section>
+      <section class="card" id="c-weather" style="--i:0"></section>
+      <section class="card" id="c-cal" style="--i:1"></section>
+      <section class="card" id="c-habits" style="--i:2"></section>
     </div>
     <div class="col">
-      <section class="card" id="c-todos" style="--i:2"></section>
-      <section class="card" id="c-trading" style="--i:3"></section>
+      <section class="card" id="c-todos" style="--i:3"></section>
+      <section class="card" id="c-trading" style="--i:4"></section>
+      <section class="card" id="c-spotify" style="--i:5"></section>
     </div>
     <div class="col">
-      <section class="card" id="c-news" style="--i:4"></section>
-      <section class="card" id="c-claude" style="--i:5"></section>
+      <section class="card" id="c-news" style="--i:6"></section>
+      <section class="card" id="c-claude" style="--i:7"></section>
     </div>
   </div>
   <div class="foot">Lifeboard · a place for the whole of it</div>
@@ -143,6 +161,30 @@ const $ = s => document.querySelector(s);
 const head = (t, meta) => `<h2><span class="dot"></span>${LB.esc(t)}${meta?`<span class="meta">${LB.esc(meta)}</span>`:""}</h2>`;
 const setupBox = h => `<div class="setup">${h}</div>`;
 
+function weatherCard(p){
+  if(p.status==="setup") return head("Weather")+setupBox(`<b>Set your location.</b> ${LB.esc(p.hint)}`);
+  if(p.status!=="ok") return head("Weather")+setupBox("Couldn't load the weather right now.");
+  const v=p.value||{};
+  const hrs=(p.items||[]).slice(0,5).map(h=>`<div class="h"><div>${LB.esc(h.time)}</div><div class="h-em">${h.emoji}</div><div class="h-t">${h.temp}°</div></div>`).join("");
+  return head("Weather", LB.esc(v.place||""))+
+    `<div class="wx"><div class="em">${v.emoji}</div><div><div class="tnow">${v.temp}${LB.esc(v.unit)}</div>
+     <div class="wmeta">${LB.esc(v.label)} · H ${v.high}° · L ${v.low}° · feels ${v.feels_like}°</div></div></div>
+     <div class="wxhours">${hrs}</div>`;
+}
+function spotifyCard(p){
+  if(p.status==="setup") return head("Spotify")+setupBox(`<b>Connect Spotify.</b> ${LB.esc(p.hint)}`);
+  if(p.status!=="ok") return head("Spotify")+setupBox("Couldn't reach Spotify right now.");
+  const now=(p.value||{}).now;
+  let top="";
+  if(now){ top=`<div class="sp-now">${now.art?`<img class="sp-art" src="${LB.esc(now.art)}" alt="">`:""}
+    <div><div class="sp-badge ${now.is_playing?"":"paused"}">${now.is_playing?"● Now playing":"Paused"}</div>
+    <div class="sp-track">${LB.esc(now.track)}</div><div class="sp-artist">${LB.esc(now.artist)}</div></div></div>`; }
+  const recent=(p.items||[]).slice(0, now?4:6).map(r=>`<div class="row"><div class="body">
+    <div class="t1">${r.url?`<a class="t1" href="${LB.esc(r.url)}" target="_blank" rel="noopener">${LB.esc(r.track)}</a>`:LB.esc(r.track)}</div>
+    <div class="t2">${LB.esc(r.artist)}</div></div></div>`).join("");
+  const lbl = now && recent ? `<div class="meta" style="margin:14px 0 2px">Recently played</div>` : "";
+  return head("Spotify")+ (top||"") + lbl + (recent||`<div class="empty">No recent tracks.</div>`);
+}
 function calCard(p){
   if(p.status==="setup") return head("Today")+setupBox(`<b>Connect your calendar.</b> ${LB.esc(p.hint)}`);
   if(p.status==="error") return head("Today")+setupBox("Couldn't reach your calendar right now.");
@@ -239,6 +281,8 @@ function wireHabits(){
     $("#hello").innerHTML=`${LB.greeting()}, <span class="name">${LB.esc(board.display_name||"friend")}</span>`;
     if((board.goals||[]).length) $("#goals").textContent="Today’s intention — "+board.goals.join(" · ");
     const m=LB.byId(board);
+    $("#c-weather").innerHTML=weatherCard(m.today_weather||{status:"setup",hint:""});
+    $("#c-spotify").innerHTML=spotifyCard(m.spotify||{status:"setup",hint:""});
     $("#c-cal").innerHTML=calCard(m.today_calendar||{status:"setup",hint:""});
     $("#c-habits").innerHTML=habitCard(m.today_habits||{status:"setup",hint:""});
     $("#c-todos").innerHTML=todoCard(m.today_todos||{items:[]});

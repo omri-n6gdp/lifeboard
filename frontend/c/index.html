@@ -91,13 +91,15 @@ body{font-family:"Newsreader",Georgia,serif;background:var(--paper);color:var(--
       <section class="sec" id="s-news" style="--i:0"></section>
     </div>
     <div class="col">
-      <section class="sec" id="s-cal" style="--i:1"></section>
-      <section class="sec" id="s-todos" style="--i:2"></section>
+      <section class="sec" id="s-weather" style="--i:1"></section>
+      <section class="sec" id="s-cal" style="--i:2"></section>
+      <section class="sec" id="s-todos" style="--i:3"></section>
     </div>
     <div class="col">
-      <section class="sec" id="s-trading" style="--i:3"></section>
-      <section class="sec" id="s-habits" style="--i:4"></section>
-      <section class="sec" id="s-claude" style="--i:5"></section>
+      <section class="sec" id="s-trading" style="--i:4"></section>
+      <section class="sec" id="s-habits" style="--i:5"></section>
+      <section class="sec" id="s-spotify" style="--i:6"></section>
+      <section class="sec" id="s-claude" style="--i:7"></section>
     </div>
   </div>
 </div>
@@ -107,6 +109,26 @@ body{font-family:"Newsreader",Georgia,serif;background:var(--paper);color:var(--
 const $=s=>document.querySelector(s);
 const sh=t=>`<div class="sh">${LB.esc(t)}</div>`;
 
+function weatherSec(p){
+  if(p.status==="setup") return sh("Weather")+`<div class="callout"><b>No location set.</b> ${LB.esc(p.hint)}</div>`;
+  if(p.status!=="ok") return sh("Weather")+`<div class="note">Conditions unavailable.</div>`;
+  const v=p.value||{};
+  const hrs=(p.items||[]).slice(0,5).map(h=>`<td style="text-align:center"><div class="meta">${LB.esc(h.time)}</div><div style="font-size:18px">${h.emoji}</div><div>${h.temp}°</div></td>`).join("");
+  return sh("Weather")+`<div style="display:flex;align-items:baseline;gap:10px">
+    <span style="font-size:32px">${v.emoji}</span><span class="figure" style="font-size:34px">${v.temp}${LB.esc(v.unit)}</span></div>
+    <div class="byl">${LB.esc(v.place||"")} · ${LB.esc(v.label)} · High ${v.high}° Low ${v.low}°</div>
+    <table class="tbl"><tr>${hrs}</tr></table>`;
+}
+function spotifySec(p){
+  if(p.status==="setup") return sh("On The Turntable")+`<div class="callout"><b>Spotify not connected.</b> ${LB.esc(p.hint)}</div>`;
+  if(p.status!=="ok") return sh("On The Turntable")+`<div class="note">The music is silent.</div>`;
+  const now=(p.value||{}).now;
+  let top="";
+  if(now){ top=`<div class="lead-head" style="font-size:23px">${now.url?`<a href="${LB.esc(now.url)}" target="_blank" rel="noopener">${LB.esc(now.track)}</a>`:LB.esc(now.track)}</div>
+    <div class="byl">${now.is_playing?"Now playing":"Paused"} · ${LB.esc(now.artist)}</div>`; }
+  const rec=(p.items||[]).slice(0,now?4:6).map(r=>`<div class="item"><span class="hl">${LB.esc(r.track)}</span><div class="meta">${LB.esc(r.artist)}</div></div>`).join("")||`<div class="note">Nothing played lately.</div>`;
+  return sh("On The Turntable")+top+rec;
+}
 function newsSec(p){
   const it=p.items||[];
   if(p.status==="error"||!it.length) return sh("The World")+`<div class="note">No dispatches at this hour.</div>`;
@@ -181,6 +203,8 @@ $("#editionL").textContent=(new Date().getHours()<12?"Morning":new Date().getHou
     if(b.display_name) $("#price").textContent="Edition: "+b.display_name;
     const m=LB.byId(b);
     $("#s-news").innerHTML=newsSec(m.feeds_news||{items:[]});
+    $("#s-weather").innerHTML=weatherSec(m.today_weather||{status:"setup",hint:""});
+    $("#s-spotify").innerHTML=spotifySec(m.spotify||{status:"setup",hint:""});
     $("#s-cal").innerHTML=calSec(m.today_calendar||{status:"setup",hint:""});
     $("#s-todos").innerHTML=todoSec(m.today_todos||{items:[]});
     $("#s-trading").innerHTML=tradSec(m.trading||{status:"setup"});

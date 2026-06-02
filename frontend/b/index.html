@@ -100,12 +100,14 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
     <span class="tag"><span class="led"></span>ONLINE</span>
   </div>
   <div class="grid">
-    <section class="mod wide" id="m-cal" style="--i:0"></section>
-    <section class="mod" id="m-trading" style="--i:1"></section>
-    <section class="mod" id="m-todos" style="--i:2"></section>
-    <section class="mod" id="m-habits" style="--i:3"></section>
-    <section class="mod" id="m-claude" style="--i:4"></section>
-    <section class="mod wide" id="m-news" style="--i:5"></section>
+    <section class="mod" id="m-weather" style="--i:0"></section>
+    <section class="mod wide" id="m-cal" style="--i:1"></section>
+    <section class="mod" id="m-spotify" style="--i:2"></section>
+    <section class="mod" id="m-trading" style="--i:3"></section>
+    <section class="mod" id="m-habits" style="--i:4"></section>
+    <section class="mod" id="m-todos" style="--i:5"></section>
+    <section class="mod" id="m-claude" style="--i:6"></section>
+    <section class="mod" id="m-news" style="--i:7"></section>
   </div>
 </div>
 
@@ -115,6 +117,29 @@ const $=s=>document.querySelector(s);
 const mh=(t,id)=>`<div class="mh"><span class="t">${LB.esc(t)}</span><span class="id">${LB.esc(id)}</span></div>`;
 const warn=h=>`<div class="warn">${h}</div>`;
 
+function weatherMod(p){
+  if(p.status==="setup") return mh("Weather","ENV-07")+warn(`<b>NO LOCATION.</b> ${LB.esc(p.hint)}`);
+  if(p.status!=="ok") return mh("Weather","ENV-07")+warn("WEATHER FEED DOWN.");
+  const v=p.value||{};
+  const hrs=(p.items||[]).slice(0,6).map(h=>`<span style="display:inline-block;min-width:46px;text-align:center;line-height:1.5"><span class="sub">${LB.esc(h.time)}</span><br>${h.emoji}<br><span style="color:var(--txt)">${h.temp}°</span></span>`).join("");
+  return mh("Weather","ENV-07 · "+LB.esc((v.place||"").toUpperCase()))+
+    `<div style="display:flex;align-items:center;gap:12px"><div style="font-size:34px">${v.emoji}</div>
+     <div><div class="val glow" style="font-size:26px">${v.temp}${LB.esc(v.unit)}</div>
+     <div class="sub">${LB.esc((v.label||"").toUpperCase())} · H${v.high}° L${v.low}° · FEELS ${v.feels_like}°</div></div></div>
+     <div style="margin-top:10px;border-top:1px dotted var(--line2);padding-top:8px">${hrs}</div>`;
+}
+function spotifyMod(p){
+  if(p.status==="setup") return mh("Audio","SPY-08")+warn(`<b>SPOTIFY OFFLINE.</b> ${LB.esc(p.hint)}`);
+  if(p.status!=="ok") return mh("Audio","SPY-08")+warn("SPOTIFY UNREACHABLE.");
+  const now=(p.value||{}).now;
+  let top="";
+  if(now){ top=`<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+    ${now.art?`<img src="${LB.esc(now.art)}" style="width:46px;height:46px;border-radius:4px;object-fit:cover" alt="">`:""}
+    <div><div style="color:${now.is_playing?'var(--green)':'var(--dim)'};font-size:11px;letter-spacing:.1em">${now.is_playing?"▶ NOW PLAYING":"❚❚ PAUSED"}</div>
+    <div style="color:var(--txt);font-weight:600">${LB.esc(now.track)}</div><div class="sub">${LB.esc(now.artist)}</div></div></div>`; }
+  const rec=(p.items||[]).slice(0,now?4:6).map(r=>`<div class="ln"><span class="txt1">${LB.esc(r.track)}</span><span class="sub">${LB.esc(r.artist)}</span></div>`).join("")||`<div class="dimline">// no history</div>`;
+  return mh("Audio","SPY-08")+top+rec;
+}
 function calMod(p){
   if(p.status==="setup") return mh("Today / Calendar","CAL-01")+warn(`<b>NO FEED.</b> ${LB.esc(p.hint)}`);
   if(p.status==="error") return mh("Today / Calendar","CAL-01")+warn("LINK UNREACHABLE.");
@@ -186,6 +211,8 @@ $("#datestr").textContent=new Date().toLocaleDateString(undefined,{weekday:"shor
     const b=await LB.board();
     $("#op").textContent=(b.display_name||"OMRI").toUpperCase();
     const m=LB.byId(b);
+    $("#m-weather").innerHTML=weatherMod(m.today_weather||{status:"setup",hint:""});
+    $("#m-spotify").innerHTML=spotifyMod(m.spotify||{status:"setup",hint:""});
     $("#m-cal").innerHTML=calMod(m.today_calendar||{status:"setup",hint:""});
     $("#m-trading").innerHTML=tradMod(m.trading||{status:"setup"});
     $("#m-todos").innerHTML=todoMod(m.today_todos||{items:[]});
