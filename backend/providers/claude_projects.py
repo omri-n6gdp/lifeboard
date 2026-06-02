@@ -3,6 +3,7 @@ Each project folder is named after its path; we show a friendly tail + last-acti
 import datetime
 import pathlib
 
+from backend import cache
 from backend.envelope import ok, setup, run_provider
 
 ID, TITLE = "feeds_claude", "Claude projects"
@@ -34,4 +35,4 @@ def provider(cfg):
         rows.sort(key=lambda r: r["last_active"], reverse=True)
         return ok(ID, TITLE, items=rows[:8])
 
-    return run_provider(ID, TITLE, _do)
+    return run_provider(ID, TITLE, lambda: cache.ttl_cached("claude:" + str(root), 120, _do))

@@ -8,6 +8,7 @@ import json
 
 import httpx
 
+from backend import cache
 from backend import config as _config
 from backend.envelope import ok, setup, run_provider
 
@@ -117,6 +118,7 @@ def tick(cfg, page_id):
     }}
     r = httpx.patch(f"{API}/pages/{page_id}", headers=_headers(token), json=body, timeout=10)
     r.raise_for_status()
+    cache.invalidate("habits")
     return r.json()
 
 
@@ -136,4 +138,4 @@ def provider(cfg):
             db_id = ensure_database(cfg)
         return ok(ID, TITLE, items=rows_to_items(_query(token, db_id)))
 
-    return run_provider(ID, TITLE, _do)
+    return run_provider(ID, TITLE, lambda: cache.ttl_cached("habits", 60, _do))

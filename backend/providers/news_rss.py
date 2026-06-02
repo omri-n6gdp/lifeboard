@@ -5,6 +5,7 @@ import time
 import feedparser
 import httpx
 
+from backend import cache
 from backend.envelope import ok, run_provider
 
 ID, TITLE = "feeds_news", "News"
@@ -50,4 +51,5 @@ def provider(cfg):
                 continue  # one bad feed shouldn't sink the panel
         return ok(ID, TITLE, items=merge_and_cap(all_items, max_items))
 
-    return run_provider(ID, TITLE, _do)
+    key = "news:" + ",".join(feeds)
+    return run_provider(ID, TITLE, lambda: cache.ttl_cached(key, 300, _do))

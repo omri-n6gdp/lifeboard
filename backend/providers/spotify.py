@@ -5,6 +5,7 @@ the same direct pattern as the Notion habits panel -- the dashboard talks to
 Spotify itself; this is not the assistant's MCP."""
 import httpx
 
+from backend import cache
 from backend.envelope import ok, setup, run_provider
 
 ID, TITLE = "spotify", "Spotify"
@@ -69,4 +70,4 @@ def provider(cfg):
         recent = map_recent(rr.json()) if rr.status_code == 200 else []
         return ok(ID, TITLE, items=recent, value={"now": now})
 
-    return run_provider(ID, TITLE, _do)
+    return run_provider(ID, TITLE, lambda: cache.ttl_cached("spotify", 15, _do))

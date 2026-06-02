@@ -4,6 +4,7 @@ import datetime
 
 import httpx
 
+from backend import cache
 from backend.envelope import ok, setup, run_provider
 
 ID, TITLE = "today_weather", "Weather"
@@ -108,4 +109,5 @@ def provider(cfg):
         value = parse_current(data, place, "°F" if fahrenheit else "°C")
         return ok(ID, TITLE, items=parse_hourly(data, 6), value=value)
 
-    return run_provider(ID, TITLE, _do)
+    key = f"weather:{lat}:{lon}:{place}:{fahrenheit}"
+    return run_provider(ID, TITLE, lambda: cache.ttl_cached(key, 600, _do))

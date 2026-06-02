@@ -67,5 +67,16 @@
       const days = h / 24; return Math.round(days) + "d ago";
     }
   };
+
+  // Live auto-refresh: call fn(byId, board) now and every intervalMs.
+  LB.live = function (intervalMs, fn) {
+    async function tick() {
+      try { const b = await LB.board(); fn(LB.byId(b), b); }
+      catch (e) { console.error(e); }
+    }
+    tick();
+    return setInterval(tick, intervalMs);
+  };
+
   window.LB = LB;
 })();

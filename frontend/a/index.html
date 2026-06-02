@@ -274,24 +274,25 @@ function wireHabits(){
   });
 }
 
-(async function(){
-  $("#day").textContent=LB.longDate();
-  try{
-    const board=await LB.board();
+$("#day").textContent=LB.longDate();
+let started=false;
+LB.live(10000, (m, board)=>{
+  if(!started){
     $("#hello").innerHTML=`${LB.greeting()}, <span class="name">${LB.esc(board.display_name||"friend")}</span>`;
     if((board.goals||[]).length) $("#goals").textContent="Today’s intention — "+board.goals.join(" · ");
-    const m=LB.byId(board);
-    $("#c-weather").innerHTML=weatherCard(m.today_weather||{status:"setup",hint:""});
-    $("#c-spotify").innerHTML=spotifyCard(m.spotify||{status:"setup",hint:""});
-    $("#c-cal").innerHTML=calCard(m.today_calendar||{status:"setup",hint:""});
-    $("#c-habits").innerHTML=habitCard(m.today_habits||{status:"setup",hint:""});
-    $("#c-todos").innerHTML=todoCard(m.today_todos||{items:[]});
-    $("#c-trading").innerHTML=tradingCard(m.trading||{status:"setup"});
-    $("#c-news").innerHTML=newsCard(m.feeds_news||{items:[]});
-    $("#c-claude").innerHTML=claudeCard(m.feeds_claude||{items:[]});
-    wireTodos(); wireHabits();
-  }catch(e){ $("#hello").textContent="Couldn't load the board"; console.error(e); }
-})();
+  }
+  $("#c-weather").innerHTML=weatherCard(m.today_weather||{status:"setup",hint:""});
+  $("#c-spotify").innerHTML=spotifyCard(m.spotify||{status:"setup",hint:""});
+  $("#c-cal").innerHTML=calCard(m.today_calendar||{status:"setup",hint:""});
+  $("#c-habits").innerHTML=habitCard(m.today_habits||{status:"setup",hint:""}); wireHabits();
+  $("#c-trading").innerHTML=tradingCard(m.trading||{status:"setup"});
+  $("#c-news").innerHTML=newsCard(m.feeds_news||{items:[]});
+  $("#c-claude").innerHTML=claudeCard(m.feeds_claude||{items:[]});
+  if(!started){
+    $("#c-todos").innerHTML=todoCard(m.today_todos||{items:[]}); wireTodos();
+    started=true;
+  }
+});
 </script>
 </body>
 </html>

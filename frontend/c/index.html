@@ -197,22 +197,18 @@ function wireHabits(){
 $("#dateL").textContent=LB.longDate().toUpperCase();
 $("#editionL").textContent=(new Date().getHours()<12?"Morning":new Date().getHours()<18?"Afternoon":"Evening")+" Edition";
 
-(async function(){
-  try{
-    const b=await LB.board();
-    if(b.display_name) $("#price").textContent="Edition: "+b.display_name;
-    const m=LB.byId(b);
-    $("#s-news").innerHTML=newsSec(m.feeds_news||{items:[]});
-    $("#s-weather").innerHTML=weatherSec(m.today_weather||{status:"setup",hint:""});
-    $("#s-spotify").innerHTML=spotifySec(m.spotify||{status:"setup",hint:""});
-    $("#s-cal").innerHTML=calSec(m.today_calendar||{status:"setup",hint:""});
-    $("#s-todos").innerHTML=todoSec(m.today_todos||{items:[]});
-    $("#s-trading").innerHTML=tradSec(m.trading||{status:"setup"});
-    $("#s-habits").innerHTML=habitSec(m.today_habits||{status:"setup",hint:""});
-    $("#s-claude").innerHTML=claudeSec(m.feeds_claude||{items:[]});
-    wireTodos();wireHabits();
-  }catch(e){console.error(e);}
-})();
+let started=false;
+LB.live(10000, (m, b)=>{
+  if(!started && b.display_name) $("#price").textContent="Edition: "+b.display_name;
+  $("#s-news").innerHTML=newsSec(m.feeds_news||{items:[]});
+  $("#s-weather").innerHTML=weatherSec(m.today_weather||{status:"setup",hint:""});
+  $("#s-spotify").innerHTML=spotifySec(m.spotify||{status:"setup",hint:""});
+  $("#s-cal").innerHTML=calSec(m.today_calendar||{status:"setup",hint:""});
+  $("#s-trading").innerHTML=tradSec(m.trading||{status:"setup"});
+  $("#s-habits").innerHTML=habitSec(m.today_habits||{status:"setup",hint:""}); wireHabits();
+  $("#s-claude").innerHTML=claudeSec(m.feeds_claude||{items:[]});
+  if(!started){ $("#s-todos").innerHTML=todoSec(m.today_todos||{items:[]}); wireTodos(); started=true; }
+});
 </script>
 </body>
 </html>

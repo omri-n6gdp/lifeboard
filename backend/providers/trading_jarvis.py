@@ -8,6 +8,7 @@ import pathlib
 
 import httpx
 
+from backend import cache
 from backend.envelope import ok, setup, run_provider
 
 ID, TITLE = "trading", "Trading & money"
@@ -65,14 +66,16 @@ def provider(cfg):
     jdir = t.get("jarvis_dir") or "~/.jarvis"
 
     if base:
-        b = base.rstrip("/")
-        try:
-            snap = httpx.get(b + "/api/snapshot", timeout=8); snap.raise_for_status()
-            secs = httpx.get(b + "/api/securities", timeout=8); secs.raise_for_status()
-        except Exception:
-            return setup(ID, TITLE, "Couldn’t reach your Trading 212 dashboard — make sure it’s running (it lives at ~/trading_212_dashboard).")
-        value, items = map_jarvis(snap.json(), secs.json())
-        return ok(ID, TITLE, items=items, value=value)
+        def _base_do():
+            b = base.rstrip("/")
+            try:
+                snap = httpx.get(b + "/api/snapshot", timeout=8); snap.raise_for_status()
+                secs = httpx.get(b + "/api/securities", timeout=8); secs.raise_for_status()
+            except Exception:
+                return setup(ID, TITLE, "Couldn’t reach your Trading 212 dashboard — make sure it’s running (it lives at ~/trading_212_dashboard).")
+            value, items = map_jarvis(snap.json(), secs.json())
+            return ok(ID, TITLE, items=items, value=value)
+        return cache.ttl_cached("trading", 60, _base_do)
 
     def _do():
         if api:

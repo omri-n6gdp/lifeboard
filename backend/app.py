@@ -2,15 +2,17 @@
 to a provider(cfg) -> envelope. Panels are grouped (today / trading / feeds) and
 enabled via config so adding a new life-area panel is one line + one provider."""
 import pathlib
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from backend.config import load_config
-from backend.providers import (calendar_panel, news_rss, trading_jarvis,
-                               claude_projects, todos, habits_notion,
-                               weather, spotify)
+from backend.providers import (calendar_panel, calendar_apple, news_rss,
+                               trading_jarvis, claude_projects, todos,
+                               habits_notion, weather, spotify)
 
 FRONTEND = pathlib.Path(__file__).parent.parent / "frontend"
 app = FastAPI(title="Lifeboard")
@@ -42,12 +44,38 @@ def _enabled_panel_ids(cfg):
     return ids
 
 
+def _safe(pid, cfg):
+    try:
+        return PROVIDERS[pid](cfg)
+    except Exception as exc:  # noqa: BLE001
+        return {"id": pid, "title": pid, "status": "error", "error": str(exc),
+                "items": [], "value": None, "hint": None, "updated_at": None}
+
+
 @app.get("/api/board")
 def board():
     cfg = load_config()
-    panels = [PROVIDERS[pid](cfg) for pid in _enabled_panel_ids(cfg) if pid in PROVIDERS]
+    ids = [pid for pid in _enabled_panel_ids(cfg) if pid in PROVIDERS]
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        panels = list(ex.map(lambda pid: _safe(pid, cfg), ids))
     return {"display_name": cfg.get("display_name"), "goals": cfg.get("goals", []),
             "theme": cfg.get("theme", "a"), "panels": panels}
+
+
+@app.on_event("startup")
+def _prewarm():
+    """Warm all caches in the background at boot so the first load is fast
+    (this absorbs the slow one-time Apple Calendar cache warm-up)."""
+    def warm():
+        try:
+            cfg = load_config()
+            calendar_apple.prewarm()
+            ids = [p for p in _enabled_panel_ids(cfg) if p in PROVIDERS and p != "today_calendar"]
+            with ThreadPoolExecutor(max_workers=8) as ex:
+                list(ex.map(lambda pid: _safe(pid, cfg), ids))
+        except Exception:
+            pass
+    threading.Thread(target=warm, daemon=True).start()
 
 
 @app.get("/api/panel/{pid}")
