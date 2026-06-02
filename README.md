@@ -87,17 +87,20 @@ Use any place name (or set `"latitude"`/`"longitude"` directly); `"units"` can b
    off from the board or from Notion — they stay in sync, and streaks are counted
    for you.
 
-### Trading
+### Trading 212 (self-contained, live)
 
-If your Trading 212 / jarvis dashboard is running, point Lifeboard at it:
+Lifeboard talks to Trading 212 **directly** — nothing else needs to be open. In
+the Trading 212 web app → gear/Settings → **API (Beta)** → generate a key (it
+gives a key *and* a secret; read-only is fine — it never trades). Put both in
+`~/.lifeboard/config.json`:
 
 ```json
-"trading": { "jarvis_dir": "~/.jarvis", "jarvis_api_url": "http://localhost:PORT/api/portfolio" }
+"trading": { "t212_api_key": "YOUR-KEY", "t212_api_secret": "YOUR-SECRET", "t212_base": "https://live.trading212.com" }
 ```
 
-…or drop a `portfolio_snapshot.json` (with `total_value`, `day_change_abs`,
-`day_change_pct`, and a `holdings` list) into `~/.jarvis`. Until then the panel
-just shows a "hook up your portfolio" note.
+It shows total value, today's change (tracked locally day-to-day), and your
+biggest holdings by profit/loss. Use `https://demo.trading212.com` for a practice
+account.
 
 ### Spotify (now playing + recently played)
 

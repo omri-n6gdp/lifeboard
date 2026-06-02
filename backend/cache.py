@@ -52,6 +52,13 @@ def swr(key, ttl, fn):
     return v[0] if v else None
 
 
+def peek(key):
+    """Return the cached value regardless of age (or None)."""
+    with _lock:
+        v = _data.get(key)
+    return v[0] if v else None
+
+
 def invalidate(key):
     with _lock:
         _data.pop(key, None)

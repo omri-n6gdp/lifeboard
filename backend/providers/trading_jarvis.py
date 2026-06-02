@@ -3,8 +3,11 @@ jarvis Trading 212 dashboard -- preferred source is that dashboard's running API
 (`jarvis_base_url` -> /api/snapshot + /api/securities), which we map into a small
 summary. Falls back to a single endpoint or an on-disk snapshot. Never
 reimplements the quant engine."""
+import datetime
 import json
+import os
 import pathlib
+import re
 
 import httpx
 
@@ -12,6 +15,67 @@ from backend import cache
 from backend.envelope import ok, setup, run_provider
 
 ID, TITLE = "trading", "Trading & money"
+
+# Remembers each day's opening value so we can show a real "today" change without
+# any external help (yesterday's last value becomes today's baseline).
+_BASELINE = pathlib.Path(os.path.expanduser("~/.lifeboard/portfolio_baseline.json"))
+
+
+def _daily_change(total):
+    if total is None:
+        return None, None
+    today = datetime.date.today().isoformat()
+    data = {}
+    if _BASELINE.exists():
+        try:
+            data = json.loads(_BASELINE.read_text())
+        except Exception:
+            data = {}
+    if data.get("date") != today:
+        baseline = data.get("last_value", total)  # yesterday's last = today's open
+        data = {"date": today, "baseline": baseline, "last_value": total}
+    else:
+        data["last_value"] = total
+        baseline = data.get("baseline", total)
+    try:
+        _BASELINE.parent.mkdir(parents=True, exist_ok=True)
+        _BASELINE.write_text(json.dumps(data))
+    except Exception:
+        pass
+    if not baseline:
+        return 0.0, 0.0
+    return round(total - baseline, 2), round((total - baseline) / baseline * 100, 2)
+
+
+def _t212(t):
+    """Self-contained: fetch the portfolio straight from Trading 212 (Basic auth:
+    key + secret). Total value + today's change (vs a local daily baseline), and
+    the biggest holdings by profit/loss with their return."""
+    auth = (t.get("t212_api_key"), t.get("t212_api_secret"))
+    base = (t.get("t212_base") or "https://live.trading212.com").rstrip("/")
+    cash = httpx.get(base + "/api/v0/equity/account/cash", auth=auth, timeout=8)
+    cash.raise_for_status()
+    cash = cash.json()
+    port = httpx.get(base + "/api/v0/equity/portfolio", auth=auth, timeout=8)
+    port.raise_for_status()
+    port = port.json()
+    total = cash.get("total")
+    day_abs, day_pct = _daily_change(total)
+    rows = []
+    for p in port:
+        avg, cur = p.get("averagePrice"), p.get("currentPrice")
+        ret = ((cur - avg) / avg * 100) if (avg and cur is not None) else None
+        if ret is None:
+            continue
+        tick = re.sub(r"[a-z]+$", "", (p.get("ticker") or "").split("_")[0])  # VWRPl_EQ -> VWRP
+        rows.append({"ticker": tick,
+                     "day_change_pct": round(ret, 2), "ppl": p.get("ppl") or 0})
+    rows.sort(key=lambda r: r["ppl"], reverse=True)
+    items = [{"ticker": r["ticker"], "day_change_pct": r["day_change_pct"], "value": None}
+             for r in rows[:6]]
+    value = {"total_value": round(total, 2) if total else None,
+             "day_change_abs": day_abs, "day_change_pct": day_pct}
+    return ok(ID, TITLE, items=items, value=value)
 
 
 def _movers(holdings):
@@ -64,6 +128,12 @@ def provider(cfg):
     base = t.get("jarvis_base_url")
     api = t.get("jarvis_api_url")
     jdir = t.get("jarvis_dir") or "~/.jarvis"
+
+    if t.get("t212_api_key") and t.get("t212_api_secret"):
+        # stale-while-revalidate: one background T212 fetch at a time (no bursts to
+        # hit the rate limit), and the board never blocks on it.
+        val = cache.swr("trading", 60, lambda: _t212(t))
+        return val if val is not None else setup(ID, TITLE, "Loading your portfolio…")
 
     if base:
         def _base_do():

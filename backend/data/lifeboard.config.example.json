@@ -12,7 +12,7 @@
   },
   "notion": { "token": "", "habits_database_id": "", "parent_page_id": "" },
   "spotify": { "client_id": "", "client_secret": "", "refresh_token": "" },
-  "trading": { "jarvis_base_url": "", "jarvis_dir": "~/.jarvis", "jarvis_api_url": "" },
+  "trading": { "t212_api_key": "", "t212_api_secret": "", "t212_base": "https://live.trading212.com", "jarvis_base_url": "", "jarvis_dir": "~/.jarvis", "jarvis_api_url": "" },
   "claude": { "projects_dir": "~/.claude/projects" },
   "panels": ["today", "trading", "feeds"],
   "theme": "a"
